@@ -1,0 +1,1357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>Bionic Hand MVP — Interview Game</title>
+<link href="https://api.fontshare.com/v2/css?f[]=satoshi@400,500,700&f[]=cabinet-grotesk@500,700,800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f5f3ee;--surface:#faf9f6;--surface2:#fff;--border:#dedad2;--text:#1e1b14;--muted:#6b6860;
+  --primary:#01696f;--primary-h:#054f54;--green:#2e7d32;--red:#b71c1c;
+  --r-sm:.5rem;--r-md:.75rem;--r-lg:1rem;--r-xl:1.5rem;--r-full:999px;
+  --shadow:0 2px 12px rgba(0,0,0,.07);
+  --font-d:'Cabinet Grotesk',sans-serif;--font-b:'Satoshi',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-b);min-height:100dvh}
+button,input,select,textarea{font:inherit;color:inherit}
+.shell{display:grid;grid-template-rows:auto 1fr;min-height:100dvh}
+.topnav{background:var(--surface);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+.topnav h1{font-family:var(--font-d);font-size:1.1rem;font-weight:800;flex:1}
+.tab-strip{display:flex;gap:.5rem}
+.tab-btn{padding:.55rem 1.1rem;border-radius:var(--r-full);border:1px solid var(--border);background:transparent;cursor:pointer;font-size:.875rem;font-weight:700;transition:.15s}
+.tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.content{overflow-y:auto;padding:1.5rem}
+.panel{display:none}.panel.active{display:block}
+.score-hero{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-xl);padding:1.25rem 1.5rem;margin-bottom:1.5rem;box-shadow:var(--shadow)}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.bar-label{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:.4rem}
+.bar-name{font-size:.75rem;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+.bar-value{font-family:var(--font-d);font-size:1.6rem;font-weight:800;line-height:1}
+.bar-wrap{height:14px;background:#e8e4dc;border-radius:var(--r-full);overflow:hidden}
+.bar-fill{height:100%;border-radius:var(--r-full);transition:.4s ease;width:0%}
+.bar-fill.red{background:linear-gradient(90deg,#ef9a9a,#e53935,#b71c1c)}
+.bar-fill.green{background:linear-gradient(90deg,#a5d6a7,#43a047,#1b5e20)}
+.bar-hint{font-size:.75rem;color:var(--muted);margin-top:.35rem}
+.tier-badge{display:inline-block;padding:.3rem .9rem;border-radius:var(--r-full);font-size:.8rem;font-weight:700;margin-top:.75rem}
+.tier-low{background:#e8f5e9;color:#1b5e20}.tier-mid{background:#fff8e1;color:#e65100}.tier-high{background:#fce4ec;color:#880e4f}
+.card{background:var(--surface2);border:1px solid var(--border);border-radius:var(--r-xl);padding:1.25rem;box-shadow:var(--shadow);margin-bottom:1rem}
+.card h3{font-family:var(--font-d);font-size:1.1rem;margin-bottom:.75rem}
+.section-title{font-family:var(--font-d);font-size:1.5rem;font-weight:800;margin-bottom:.25rem}
+.section-sub{color:var(--muted);margin-bottom:1.5rem}
+.choices{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.5rem}
+.choice-btn{display:flex;flex-direction:column;align-items:center;gap:.3rem;padding:.75rem 1rem;border:2px solid var(--border);border-radius:var(--r-lg);background:var(--surface);cursor:pointer;transition:.15s;min-width:90px;text-align:center}
+.choice-btn .icon{font-size:1.8rem;line-height:1}
+.choice-btn .lbl{font-size:.75rem;font-weight:700}
+.choice-btn .sub{font-size:.65rem;color:var(--muted)}
+.choice-btn.active{border-color:var(--primary);background:#e0f2f1;color:var(--primary)}
+.grip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:.75rem;margin-top:.75rem}
+.grip-card{border:2px solid var(--border);border-radius:var(--r-lg);padding:.75rem .5rem;cursor:pointer;text-align:center;transition:.15s;background:var(--surface)}
+.grip-card .gicon{font-size:2.2rem;display:block;margin-bottom:.4rem}
+.grip-card .gname{font-size:.78rem;font-weight:700;line-height:1.2}
+.grip-card .gdesc{font-size:.65rem;color:var(--muted);margin-top:.3rem}
+.grip-card.active{border-color:var(--primary);background:#e0f2f1}
+.rank-badge{display:inline-flex;align-items:center;justify-content:center;width:1.2rem;height:1.2rem;border-radius:50%;background:var(--primary);color:#fff;font-size:.6rem;font-weight:700;float:right}
+.form-grid{display:grid;gap:1rem}
+.form-grid.two{grid-template-columns:1fr 1fr}
+label.lbl{display:block;font-size:.875rem;font-weight:700;margin-bottom:.35rem}
+input[type=number],input[type=text],select,textarea{width:100%;padding:.7rem .9rem;border:1px solid var(--border);border-radius:var(--r-md);background:#fff}
+textarea{resize:vertical}
+.stage-nav{display:flex;justify-content:space-between;align-items:center;margin-top:1.5rem;gap:1rem;flex-wrap:wrap}
+.btn-primary{padding:.75rem 1.5rem;background:var(--primary);color:#fff;border:none;border-radius:var(--r-full);font-weight:700;cursor:pointer}
+.btn-secondary{padding:.75rem 1.5rem;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-full);font-weight:700;cursor:pointer}
+.btn-danger{padding:.75rem 1.5rem;background:#c62828;color:#fff;border:none;border-radius:var(--r-full);font-weight:700;cursor:pointer}
+.stage-dots{display:flex;gap:.5rem;align-items:center}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:.2s}
+.dot.active{background:var(--primary);width:24px;border-radius:var(--r-full)}
+.dot.done{background:var(--green)}
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:.6rem .75rem;border-bottom:1px solid var(--border);text-align:left;vertical-align:top}
+th{font-weight:700;background:var(--surface)}
+.settings-section{margin-bottom:1.5rem}
+.settings-section h4{font-size:.875rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin-bottom:.75rem;padding-bottom:.4rem;border-bottom:1px solid var(--border)}
+.setting-row{display:grid;grid-template-columns:1.4fr 1fr;gap:.75rem;align-items:center;padding:.5rem 0;border-bottom:1px solid #f0ece5}
+.setting-lbl{font-size:.875rem}
+.setting-lbl small{display:block;color:var(--muted);font-size:.75rem}
+.setting-input{display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.setting-input input{width:80px;text-align:right;padding:.5rem .75rem}
+.setting-input span{font-size:.8rem;color:var(--muted);white-space:nowrap}
+.pill{display:inline-flex;align-items:center;gap:.3rem;padding:.25rem .65rem;border-radius:var(--r-full);background:var(--bg);border:1px solid var(--border);font-size:.75rem}
+.helper{font-size:.85rem;color:var(--muted);margin-top:.5rem}
+.eyebrow{font-size:.7rem;text-transform:uppercase;letter-spacing:.12em;color:var(--muted)}
+.hidden{display:none!important}
+.info-box{padding:.75rem 1rem;background:#e0f2f1;border:1px solid #80cbc4;border-radius:var(--r-md);font-size:.85rem;margin-top:.75rem}
+.warn-box{padding:.75rem 1rem;background:#fff8e1;border:1px solid #ffe082;border-radius:var(--r-md);font-size:.85rem;margin-top:.75rem}
+
+/* ── DUAL RANGE SLIDER ── */
+.dual-range-wrap{position:relative;height:56px;margin:.75rem 0 .5rem;user-select:none}
+.dual-range-track{position:absolute;top:26px;left:0;right:0;height:6px;background:#e8e4dc;border-radius:3px;pointer-events:none}
+.dual-range-fill{position:absolute;top:26px;height:6px;background:var(--primary);border-radius:3px;pointer-events:none}
+.dual-range-thumb{position:absolute;top:14px;width:28px;height:28px;border-radius:50%;background:var(--primary);border:3px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.25);cursor:grab;transform:translateX(-50%);z-index:2;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#fff;font-weight:800;touch-action:none}
+.dual-range-thumb:active{cursor:grabbing;transform:translateX(-50%) scale(1.15)}
+.dual-range-hint{display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted);margin-top:-.1rem}
+
+@media(max-width:700px){.score-grid,.form-grid.two,.setting-row{grid-template-columns:1fr}.topnav{flex-direction:column;align-items:flex-start}}
+
+.cc-chosen{box-shadow:0 0 0 3px var(--primary)!important}
+.lit-mark{z-index:3}
+
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="topnav">
+    <h1>🦾 Bionic Hand MVP · OTWorld interview game</h1>
+    <div class="tab-strip">
+      <button class="tab-btn active" data-panel="gamePanel">🎮 Interview game</button>
+      <button class="tab-btn" data-panel="resultsPanel">📊 Results</button>
+      <button class="tab-btn" data-panel="settingsPanel">⚙️ Setup</button>
+    </div>
+  </nav>
+  <div class="content">
+
+    <!-- GAME PANEL -->
+    <div id="gamePanel" class="panel active">
+      <div class="score-hero" style="display:none">
+        <div class="score-grid">
+          <div>
+            <div class="bar-label"><span class="bar-name">⚖️ Mass</span><span class="bar-value" id="barMassVal">70 g</span></div>
+            <div class="bar-wrap"><div class="bar-fill red" id="barMassFill"></div></div>
+            <div class="bar-hint" id="barMassHint">Base hand shell · no options yet</div>
+          </div>
+          <div>
+            <div class="bar-label"><span class="bar-name">✨ Functionality</span><span class="bar-value" id="barFuncVal">0 pts</span></div>
+            <div class="bar-wrap"><div class="bar-fill green" id="barFuncFill"></div></div>
+            <div class="bar-hint" id="barFuncHint">Choose grip patterns to increase</div>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:.85rem;flex-wrap:wrap;gap:.5rem">
+          <div><div class="eyebrow">Runtime</div><div style="font-family:var(--font-d);font-size:1.4rem;font-weight:800" id="barRuntimeVal">4 h</div></div>
+          <span class="tier-badge tier-low" id="tierBadge">LOW tier</span>
+        </div>
+      </div>
+      <div style="display:flex;justify-content:center;margin-bottom:1.25rem"><div class="stage-dots" id="stageDots"></div></div>
+
+      <!-- ST1 -->
+      <div id="st1" class="card stage-card">
+        <h3>👤 Block 1 — Who are you?</h3>
+        <p class="helper">Select the role that best describes you.</p>
+        <div class="choices" id="roleChoices">
+          <button class="choice-btn active" data-val="clinician"><span class="icon">🩺</span><span class="lbl">Clinician</span></button>
+          <button class="choice-btn" data-val="prosthetist"><span class="icon">🦾</span><span class="lbl">Prosthetist / OT</span></button>
+          <button class="choice-btn" data-val="physician"><span class="icon">👨‍⚕️</span><span class="lbl">Physician</span></button>
+          <button class="choice-btn" data-val="parent"><span class="icon">👨‍👧</span><span class="lbl">Parent / Carer</span></button>
+          <button class="choice-btn" data-val="enduser"><span class="icon">🧒</span><span class="lbl">End user</span></button>
+          <button class="choice-btn" data-val="engineer"><span class="icon">🔧</span><span class="lbl">Engineer / R&D</span></button>
+          <button class="choice-btn" data-val="sales"><span class="icon">🤝</span><span class="lbl">Distributor / Sales</span></button>
+          <button class="choice-btn" data-val="researcher"><span class="icon">🔬</span><span class="lbl">Researcher</span></button>
+          <button class="choice-btn" data-val="other"><span class="icon">💬</span><span class="lbl">Other</span></button>
+        </div>
+        <div id="otherRoleBlock" class="hidden" style="margin-top:.75rem">
+          <label class="lbl">Please describe your role</label>
+          <input id="f_otherRole" type="text" placeholder="e.g. Insurance specialist, teacher…">
+        </div>
+        <div class="form-grid two" style="margin-top:1rem">
+          <div><label class="lbl">Country / market</label><input id="f_country" type="text" placeholder="e.g. Germany"></div>
+          <div id="expBlock">
+            <label class="lbl" id="expLabel">Years of experience</label>
+            <input id="f_exp" type="number" value="5" min="0">
+          </div>
+        </div>
+      </div>
+
+      <!-- ST2 -->
+      <div id="st2" class="card stage-card" style="display:none">
+        <h3>👶 Block 2 — User context</h3>
+
+        <!-- clinician / prosthetist / physician / sales / researcher -->
+        <div id="clinicianContext">
+          <p class="helper" id="agePrompt">From what age is fitting a bionic hand typically realistic in your practice?</p>
+          <label class="lbl" style="margin-top:.75rem">Typical fitting age range</label>
+          <div class="dual-range-wrap" id="drWrap1">
+            <div class="dual-range-track"></div>
+            <div class="dual-range-fill" id="drFill1"></div>
+            <div class="dual-range-thumb" id="drThumbMin1">◀▶</div>
+            <div class="dual-range-thumb" id="drThumbMax1">◀▶</div>
+          </div>
+          <div class="dual-range-hint"><span>1 yr</span><span>5</span><span>9</span><span>14</span><span>18 yrs</span></div>
+          <div style="display:flex;gap:1rem;margin-top:.65rem;align-items:center;flex-wrap:wrap">
+            <span class="pill">From: <strong id="drMinLabel1">4 yrs</strong></span>
+            <span class="pill">To: <strong id="drMaxLabel1">14 yrs</strong></span>
+            <span class="pill" id="handSizePill">Hand sizes: ~110–130mm</span>
+          </div>
+          <div class="form-grid two" style="margin-top:1rem">
+            <div><label class="lbl">Most common level of absence</label>
+              <select id="f_absence"><option>Wrist level</option><option>Forearm level</option><option>Near elbow</option><option>Other / unclear</option></select>
+            </div>
+          </div>
+          <div id="salesDistBlock" class="hidden" style="margin-top:1rem">
+            <label class="lbl">Most common prosthesis type in your portfolio</label>
+            <div class="choices" id="salesDeviceChoices">
+              <button class="choice-btn" data-val="passive_majority"><span class="icon">🦿</span><span class="lbl">Mostly passive</span><span class="sub">&gt;70%</span></button>
+              <button class="choice-btn" data-val="passive_more"><span class="icon">🦿</span><span class="lbl">More passive</span><span class="sub">50–70%</span></button>
+              <button class="choice-btn" data-val="mixed"><span class="icon">⚖️</span><span class="lbl">Mixed ~50/50</span></button>
+              <button class="choice-btn" data-val="active_more"><span class="icon">🦾</span><span class="lbl">More active</span><span class="sub">50–70%</span></button>
+              <button class="choice-btn" data-val="active_majority"><span class="icon">🦾</span><span class="lbl">Mostly active</span><span class="sub">&gt;70%</span></button>
+            </div>
+          </div>
+          <div id="clinicianPctBlock" class="hidden" style="margin-top:1rem">
+            <label class="lbl">Roughly what % of pediatric prosthetics you fit are active/bionic?</label>
+            <input type="range" id="f_activePct" min="0" max="100" step="5" value="20" style="width:100%;accent-color:var(--primary);margin:.5rem 0">
+            <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted)"><span>0%</span><span>25%</span><span>50%</span><span>75%</span><span>100%</span></div>
+            <div style="font-family:var(--font-d);font-size:1.1rem;font-weight:800;color:var(--primary);margin-top:.35rem" id="activePctVal">20% active devices</div>
+          </div>
+        </div>
+
+        <!-- parent / end user -->
+        <div id="userContext" class="hidden">
+          <p class="helper">How old is the child / end user?</p>
+          <label class="lbl" style="margin-top:.75rem">Age</label>
+          <input type="range" id="f_age" min="1" max="18" value="8" style="width:100%;accent-color:var(--primary);margin:.5rem 0">
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted)"><span>1</span><span>5</span><span>9</span><span>14</span><span>18 yrs</span></div>
+          <div style="display:flex;gap:.75rem;margin-top:.35rem;align-items:center;flex-wrap:wrap">
+            <span style="font-family:var(--font-d);font-size:1.2rem;font-weight:800;color:var(--primary)" id="ageValDisplay">8 years</span>
+            <span class="pill" id="handSizePill2">Hand size: ~120mm</span>
+          </div>
+          <div class="form-grid two" style="margin-top:1rem">
+            <div><label class="lbl">Level of absence</label>
+              <select id="f_absence2"><option>Wrist level</option><option>Forearm level</option><option>Near elbow</option><option>Other / unclear</option></select>
+            </div>
+            <div><label class="lbl">Current prosthesis</label>
+              <select id="f_device"><option>None</option><option>Passive</option><option>Cosmetic</option><option>Active / myoelectric</option><option>Not sure</option></select>
+            </div>
+          </div>
+          <div id="prosthesisYrsBlock" class="hidden" style="margin-top:1rem">
+            <label class="lbl">Years using a prosthesis</label>
+            <input id="f_prosYrs" type="number" min="0" value="2">
+          </div>
+        </div>
+
+        <!-- engineer -->
+        <div id="engineerContext" class="hidden">
+          <div class="info-box">As an engineer, the key parameters are earliest fitting age and the product size range.</div>
+
+          <div style="margin-top:1.25rem">
+            <label class="lbl">Earliest fitting age range — when is a bionic hand realistically fittable?</label>
+            <div class="dual-range-wrap" id="drWrap2">
+              <div class="dual-range-track"></div>
+              <div class="dual-range-fill" id="drFill2"></div>
+              <div class="dual-range-thumb" id="drThumbMin2">◀▶</div>
+              <div class="dual-range-thumb" id="drThumbMax2">◀▶</div>
+            </div>
+            <div class="dual-range-hint"><span>1 yr</span><span>5</span><span>9</span><span>14</span><span>18 yrs</span></div>
+            <div style="display:flex;gap:1rem;margin-top:.65rem;align-items:center;flex-wrap:wrap">
+              <span class="pill">Earliest: <strong id="drMinLabel2">3 yrs</strong></span>
+              <span class="pill">Latest focus: <strong id="drMaxLabel2">10 yrs</strong></span>
+            </div>
+          </div>
+
+          <div style="margin-top:1.5rem">
+            <label class="lbl">How many hand sizes would you propose for the product line?</label>
+            <div class="choices" id="numSizesChoices" style="margin-top:.75rem">
+              <button class="choice-btn" data-val="1"><span class="icon">1️⃣</span><span class="lbl">1 size</span></button>
+              <button class="choice-btn" data-val="2"><span class="icon">2️⃣</span><span class="lbl">2 sizes</span></button>
+              <button class="choice-btn active" data-val="3"><span class="icon">3️⃣</span><span class="lbl">3 sizes</span></button>
+              <button class="choice-btn" data-val="4"><span class="icon">4️⃣</span><span class="lbl">4 sizes</span></button>
+              <button class="choice-btn" data-val="5+"><span class="icon">🔢</span><span class="lbl">5 or more</span></button>
+            </div>
+
+            <!-- hand size visual -->
+            <div id="handSizeViz" style="margin-top:1.25rem;padding:1.25rem;background:var(--bg);border-radius:var(--r-lg);border:1px solid var(--border)">
+              <div class="eyebrow" style="margin-bottom:.75rem">Hand sizes for selected product line — linked to earliest fitting age</div>
+              <div id="handSizeHands" style="display:flex;align-items:flex-end;gap:1.5rem;flex-wrap:wrap;padding:.5rem 0"></div>
+              <div id="handSizeNote" class="helper" style="margin-top:.75rem"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+
+      <!-- ST3: CONJOINT TRADE-OFFS -->
+      <div id="st3" class="card stage-card" style="display:none">
+        <h3>⚖️ Block 3 — Trade-off pairs</h3>
+        <p class="helper">For each pair, choose the device you would <strong>more likely recommend or buy</strong> for a child aged 7–10. There is no right answer — gut reaction counts.</p>
+        <div id="conjointPairs"></div>
+        <div id="conjointNote" class="helper" style="margin-top:.75rem;color:var(--primary);font-weight:700"></div>
+
+        <!-- Compact grips + battery + wrist inline -->
+        <div style="margin-top:1.5rem;border-top:1px solid var(--border);padding-top:1.25rem">
+          <div class="eyebrow" style="margin-bottom:.75rem">Quick specs — select your preferred configuration</div>
+          <div class="form-grid" style="gap:1.25rem">
+
+            <div>
+              <label class="lbl">🤏 Top grip priorities <span style="font-weight:400;color:var(--muted)">Select up to 3 — order matters (1st = most important)</span></label>
+              <div class="grip-grid" id="gripGrid" style="margin-top:.5rem;display:flex;flex-wrap:wrap;gap:.5rem"></div>
+              <div id="gripConsequence" class="info-box" style="margin-top:.6rem;font-size:.78rem">← Select grips above</div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+              <div>
+                <label class="lbl">🔋 Battery size</label>
+                <div class="choices" id="battChoices" style="flex-direction:column;gap:.4rem;margin-top:.4rem">
+                  <button class="choice-btn active" data-val="small" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">🪫</span><div><div class="lbl">Small</div><div class="sub">~4 h · lightest</div></div></button>
+                  <button class="choice-btn" data-val="medium" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">🔋</span><div><div class="lbl">School day</div><div class="sub">~8 h · balanced</div></div></button>
+                  <button class="choice-btn" data-val="large" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">🔌</span><div><div class="lbl">Full day</div><div class="sub">~12 h · heaviest</div></div></button>
+                </div>
+              </div>
+              <div>
+                <label class="lbl">⚡ Charging</label>
+                <div class="choices" id="chargeChoices" style="flex-direction:column;gap:.4rem;margin-top:.4rem">
+                  <button class="choice-btn active" data-val="usbc" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">⚡</span><div><div class="lbl">USB-C</div></div></button>
+                  <button class="choice-btn" data-val="swap" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">🔄</span><div><div class="lbl">Replaceable</div></div></button>
+                  <button class="choice-btn" data-val="both" style="flex-direction:row;justify-content:flex-start;gap:.6rem;min-width:unset"><span class="icon" style="font-size:1.2rem">🔀</span><div><div class="lbl">Both</div></div></button>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <label class="lbl">🔩 Wrist in first bionic prosthesis</label>
+              <div class="choices" id="wristNecessaryChoices" style="margin-top:.4rem">
+                <button class="choice-btn active" data-val="no"><span class="icon">🚫</span><span class="lbl">Not necessary</span></button>
+                <button class="choice-btn" data-val="optional"><span class="icon">🔄</span><span class="lbl">Optional / V2</span></button>
+                <button class="choice-btn" data-val="yes"><span class="icon">✅</span><span class="lbl">Yes, needed</span></button>
+              </div>
+              <div id="wristTypeBlock" class="hidden" style="margin-top:.75rem">
+                <div class="choices" id="wristTypeChoices">
+                  <button class="choice-btn" data-val="passive"><span class="icon">🔒</span><span class="lbl">Passive wrist</span></button>
+                  <button class="choice-btn" data-val="active"><span class="icon">🌀</span><span class="lbl">Active wrist</span></button>
+                  <button class="choice-btn" data-val="either"><span class="icon">⚖️</span><span class="lbl">Either</span></button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ST4: PRICE -->
+      <div id="st4" class="card stage-card" style="display:none">
+        <h3>💶 Block 6 — Price and reimbursement</h3>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+          <div style="padding:1rem;background:var(--bg);border-radius:var(--r-lg);border:1px solid var(--border)">
+            <div class="eyebrow" id="priceBoxLabel">Configured device price</div>
+            <div style="font-family:var(--font-d);font-size:1.6rem;font-weight:800" id="priceDisplay">€3,500</div>
+            <div class="helper" id="priceDisplaySub"></div>
+          </div>
+          <div style="padding:1rem;background:var(--bg);border-radius:var(--r-lg);border:1px solid var(--border)">
+            <div class="eyebrow">Current mass</div>
+            <div style="font-family:var(--font-d);font-size:1.6rem;font-weight:800" id="massDisplay">70 g</div>
+          </div>
+        </div>
+        <div id="reimbBlock">
+          <label class="lbl">Reimbursement / funding limit in your market</label>
+          <input type="range" id="f_reimb" min="0" max="12" value="4" step="1" style="width:100%;accent-color:var(--primary);margin:.5rem 0">
+          <div style="display:flex;justify-content:space-between;font-size:.65rem;color:var(--muted)" id="reimbHints"></div>
+          <div style="font-family:var(--font-d);font-size:1.1rem;font-weight:800;color:var(--primary);margin-top:.4rem" id="reimbDisplay">€5k limit</div>
+        </div>
+        <div id="clinPriceBlock" class="hidden" style="margin-top:1rem">
+          <div class="warn-box" id="clinPriceNote"></div>
+          <div style="margin-top:1rem">
+            <p class="helper" style="margin-bottom:.5rem"><strong>Reaction to this price</strong></p>
+            <div class="choices" id="feelChoices">
+              <button class="choice-btn active" data-val="acceptable"><span class="icon">✅</span><span class="lbl">Acceptable</span></button>
+              <button class="choice-btn" data-val="expensive"><span class="icon">😬</span><span class="lbl">Too expensive</span></button>
+              <button class="choice-btn" data-val="good_value"><span class="icon">🎯</span><span class="lbl">Good value</span></button>
+              <button class="choice-btn" data-val="too_heavy"><span class="icon">⚖️</span><span class="lbl">Too heavy for value</span></button>
+            </div>
+          </div>
+        </div>
+        <div id="distPriceBlock" class="hidden" style="margin-top:1rem">
+          <div class="info-box">Price shown is the estimated manufacturer price — before your mark-up.</div>
+          <div style="margin-top:1rem">
+            <label class="lbl">Expected distributor margin</label>
+            <div class="choices" id="marginChoices">
+              <button class="choice-btn" data-val="no_answer"><span class="icon">🤐</span><span class="lbl">No answer</span></button>
+              <button class="choice-btn" data-val="lt10"><span class="icon">📉</span><span class="lbl">&lt;10%</span></button>
+              <button class="choice-btn" data-val="10_20"><span class="icon">📊</span><span class="lbl">10–20%</span></button>
+              <button class="choice-btn" data-val="20_30"><span class="icon">📈</span><span class="lbl">20–30%</span></button>
+              <button class="choice-btn" data-val="30_40"><span class="icon">💹</span><span class="lbl">30–40%</span></button>
+              <button class="choice-btn" data-val="gt40"><span class="icon">🔝</span><span class="lbl">&gt;40%</span></button>
+            </div>
+            <div style="margin-top:.75rem"><label class="lbl">Sellability notes</label><textarea id="f_sales" rows="3" placeholder="Would this sell? Barriers?"></textarea></div>
+          </div>
+        </div>
+        <div style="margin-top:1.25rem">
+          <p class="helper" style="margin-bottom:.5rem"><strong>Funding source</strong></p>
+          <div class="choices" id="fundChoices">
+            <button class="choice-btn" data-val="insurance"><span class="icon">🏥</span><span class="lbl">Insurance</span></button>
+            <button class="choice-btn" data-val="government"><span class="icon">🏛️</span><span class="lbl">Government</span></button>
+            <button class="choice-btn" data-val="private"><span class="icon">👤</span><span class="lbl">Private</span></button>
+            <button class="choice-btn" data-val="foundation"><span class="icon">❤️</span><span class="lbl">Foundation</span></button>
+            <button class="choice-btn" data-val="mixed"><span class="icon">🔀</span><span class="lbl">Mixed</span></button>
+            <button class="choice-btn" data-val="other_fund"><span class="icon">💬</span><span class="lbl">Other</span></button>
+          </div>
+          <div id="otherFundBlock" class="hidden" style="margin-top:.75rem">
+            <label class="lbl">Please describe funding source</label>
+            <input id="f_otherFund" type="text" placeholder="e.g. Charity, crowdfunding…">
+          </div>
+        </div>
+      </div>
+
+      <!-- ST5: FEEDBACK -->
+      <div id="st5" class="card stage-card" style="display:none">
+        <h3>💬 Block 7 — Final feedback</h3>
+        <div class="form-grid two">
+          <div><label class="lbl">What is missing?</label><textarea id="f_missing" rows="3" placeholder="Feature, concern, or gap"></textarea></div>
+          <div><label class="lbl">What would make this easy to adopt or recommend?</label><textarea id="f_adopt" rows="3" placeholder="Key adoption driver"></textarea></div>
+          <div><label class="lbl">Biggest risk or reason for rejection</label><textarea id="f_risk" rows="3" placeholder="Main barrier"></textarea></div>
+          <div>
+            <label class="lbl">Follow-up possible?</label>
+            <select id="f_contact"><option>No</option><option>Yes</option></select>
+            <div style="margin-top:.75rem"><label class="lbl">Email or contact</label><input id="f_email" type="text" placeholder="Optional"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stage-nav">
+        <button class="btn-secondary" id="btnPrev">← Previous</button>
+        <div class="stage-dots" id="stageDots2"></div>
+        <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+          <button class="btn-secondary" id="btnSave">💾 Save</button>
+          <button class="btn-primary" id="btnNext">Next →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RESULTS -->
+    <div id="resultsPanel" class="panel">
+      <div class="section-title">📊 Saved interviews</div>
+      <p class="section-sub">All interviews from this session. Export before closing.</p>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem">
+        <div class="card"><div class="eyebrow">Count</div><div style="font-family:var(--font-d);font-size:2rem;font-weight:800" id="rCount">0</div></div>
+        <div class="card"><div class="eyebrow">Avg mass</div><div style="font-family:var(--font-d);font-size:2rem;font-weight:800" id="rAvgMass">0 g</div></div>
+        <div class="card"><div class="eyebrow">Avg price</div><div style="font-family:var(--font-d);font-size:2rem;font-weight:800" id="rAvgPrice">€0</div></div>
+      </div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:.75rem;margin-bottom:1rem">
+          <strong>Interview log</strong>
+          <div style="display:flex;gap:.75rem;flex-wrap:wrap">
+            <button class="btn-primary" id="btnNewInterview">➕ New interview</button>
+            <button class="btn-secondary" id="btnExport">⬇️ Export CSV</button>
+            
+          </div>
+        </div>
+        <div style="overflow:auto">
+          <table><thead><tr><th>#</th><th>Date</th><th>Role</th><th>Country</th><th>Mass</th><th>Price</th><th>Tier</th><th>P1</th><th>P2</th><th>P3</th><th>P4</th><th></th></tr></thead>
+          <tbody id="resultsBody"><tr><td colspan="14" style="color:var(--muted)">No interviews saved yet.</td></tr></tbody></table>
+        </div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="settingsPanel" class="panel">
+      <div class="section-title">⚙️ Interviewer setup</div>
+      <p class="section-sub">Define engineering assumptions. Saved automatically in your browser between sessions.</p>
+      <div class="card settings-section">
+        <h4>Base values</h4>
+        <div class="setting-row"><div class="setting-lbl">Base hand mass<small>Empty shell</small></div><div class="setting-input"><input id="s_baseMass" type="number" value="70"><span>g</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Base price (manufacturer)<small>Before channel margins</small></div><div class="setting-input"><input id="s_basePrice" type="number" value="3500"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Channel margin factor<small>For clinician price view</small></div><div class="setting-input"><input id="s_marginFactor" type="number" value="1.3" step="0.05"><span>× (1.3 = +30%)</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Low → Mid mass threshold</div><div class="setting-input"><input id="s_lowMass" type="number" value="120"><span>g</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Mid → High mass threshold</div><div class="setting-input"><input id="s_midMass" type="number" value="180"><span>g</span></div></div>
+      </div>
+      <div class="card settings-section">
+        <h4>Grip finger logic</h4>
+        <div class="setting-row"><div class="setting-lbl">Index finger<small>Pinch, tripod, lateral</small></div><div class="setting-input"><input id="s_mIndex" type="number" value="10"><span>g</span><input id="s_pIndex" type="number" value="800"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Middle finger<small>Tripod, cylinder, lumbrical</small></div><div class="setting-input"><input id="s_mMiddle" type="number" value="10"><span>g</span><input id="s_pMiddle" type="number" value="700"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Ring + pinky<small>Cylinder, hook, bimanual</small></div><div class="setting-input"><input id="s_mRingPinky" type="number" value="12"><span>g</span><input id="s_pRingPinky" type="number" value="900"><span>€</span></div></div>
+      </div>
+      <div class="card settings-section">
+        <h4>Battery &amp; charging</h4>
+        <div class="setting-row"><div class="setting-lbl">Small battery (~4h)</div><div class="setting-input"><input id="s_mBattS" type="number" value="20"><span>g</span><input id="s_pBattS" type="number" value="250"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">School-day battery (~8h)</div><div class="setting-input"><input id="s_mBattM" type="number" value="35"><span>g</span><input id="s_pBattM" type="number" value="400"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Full-day battery (~12h)</div><div class="setting-input"><input id="s_mBattL" type="number" value="50"><span>g</span><input id="s_pBattL" type="number" value="550"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">USB-C charging port</div><div class="setting-input"><input id="s_mUsbc" type="number" value="6"><span>g</span><input id="s_pUsbc" type="number" value="120"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Replaceable battery system</div><div class="setting-input"><input id="s_mSwap" type="number" value="12"><span>g</span><input id="s_pSwap" type="number" value="220"><span>€</span></div></div>
+      </div>
+      <div class="card settings-section">
+        <h4>Wrist</h4>
+        <div class="setting-row"><div class="setting-lbl">Passive wrist</div><div class="setting-input"><input id="s_mWristP" type="number" value="15"><span>g</span><input id="s_pWristP" type="number" value="300"><span>€</span></div></div>
+        <div class="setting-row"><div class="setting-lbl">Active wrist</div><div class="setting-input"><input id="s_mWristA" type="number" value="40"><span>g</span><input id="s_pWristA" type="number" value="1000"><span>€</span><div class="setting-row"><div class="setting-lbl">Cosmetic glove</div><div class="setting-input"><input id="s_mGlove" type="number" value="40"><span>g</span><input id="s_pGlove" type="number" value="2000"><span>€</span></div></div>
+      </div></div>
+      </div>
+      <div class="card settings-section">
+        <h4>Trade-off pairs (conjoint) — Device specs</h4>
+        <p class="helper" style="margin-bottom:.75rem">Edit the two device profiles for each trade-off question shown in Block 3. Changes take effect immediately.</p>
+        
+        <div style="margin-bottom:1.5rem;padding:1rem;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border)">
+          <div style="font-weight:700;font-size:.85rem;margin-bottom:.75rem" id="cj0title">Pair 1</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device A</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="a" data-field="mass" type="number" value="320" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="a" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="a" data-field="battery" type="number" value="6" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="a" data-field="price" type="number" value="4000" style="width:80px"><span>€</span></div></div>
+            </div><div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device B</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="b" data-field="mass" type="number" value="420" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="b" data-field="grips" type="number" value="8" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="b" data-field="battery" type="number" value="8" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="0" data-side="b" data-field="price" type="number" value="5500" style="width:80px"><span>€</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem;padding:1rem;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border)">
+          <div style="font-weight:700;font-size:.85rem;margin-bottom:.75rem" id="cj1title">Pair 2</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device A</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="a" data-field="mass" type="number" value="340" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="a" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="a" data-field="battery" type="number" value="4" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="a" data-field="price" type="number" value="4300" style="width:80px"><span>€</span></div></div>
+            </div><div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device B</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="b" data-field="mass" type="number" value="390" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="b" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="b" data-field="battery" type="number" value="12" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="1" data-side="b" data-field="price" type="number" value="4800" style="width:80px"><span>€</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem;padding:1rem;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border)">
+          <div style="font-weight:700;font-size:.85rem;margin-bottom:.75rem" id="cj2title">Pair 3</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device A</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="a" data-field="mass" type="number" value="350" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="a" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="a" data-field="battery" type="number" value="8" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="a" data-field="price" type="number" value="4500" style="width:80px"><span>€</span></div></div>
+            </div><div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device B</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="b" data-field="mass" type="number" value="365" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="b" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="b" data-field="battery" type="number" value="8" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="2" data-side="b" data-field="price" type="number" value="4800" style="width:80px"><span>€</span></div></div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-bottom:1.5rem;padding:1rem;background:var(--bg);border-radius:var(--r-md);border:1px solid var(--border)">
+          <div style="font-weight:700;font-size:.85rem;margin-bottom:.75rem" id="cj3title">Pair 4</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem">
+            <div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device A</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="a" data-field="mass" type="number" value="390" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="a" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="a" data-field="battery" type="number" value="8" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="a" data-field="price" type="number" value="6500" style="width:80px"><span>€</span></div></div>
+            </div><div>
+              <div class="eyebrow" style="margin-bottom:.5rem">Device B</div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Mass</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="b" data-field="mass" type="number" value="350" style="width:70px"><span>g</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Grips</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="b" data-field="grips" type="number" value="3" style="width:70px"></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Battery</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="b" data-field="battery" type="number" value="8" style="width:70px"><span>h</span></div></div>
+              <div class="setting-row" style="grid-template-columns:1fr 1fr"><div class="setting-lbl">Price</div><div class="setting-input"><input class="cj-input" data-pair="3" data-side="b" data-field="price" type="number" value="4500" style="width:80px"><span>€</span></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card" style="background:#e8f5e9;border-color:#a5d6a7">
+        <strong style="color:var(--green)">💾 Settings saved automatically in your browser</strong>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+
+// ── CONSTANTS ────────────────────────────────────────────────────────────────
+const TOTAL_STAGES = 5;
+
+const GRIPS = [
+  {id:'basic2',  icon:'✌️',  name:'Basic 2-grip',   fingers:['index','middle'],              funcPts:2,
+    objects:[{e:'☕',l:'Cup'},{e:'✏️',l:'Pencil'},{e:'📱',l:'Phone'}]},
+  {id:'tripod',  icon:'🤌',  name:'Tripod',          fingers:['index','middle'],              funcPts:3,
+    objects:[{e:'✏️',l:'Writing'},{e:'🔑',l:'Key'},{e:'💊',l:'Pill'}]},
+  {id:'lateral', icon:'👌',  name:'Lateral pinch',   fingers:['index'],                       funcPts:2,
+    objects:[{e:'💳',l:'Card'},{e:'🤐',l:'Zip'},{e:'📖',l:'Page'}]},
+  {id:'power',   icon:'✊',  name:'Power grip',      fingers:['index','middle','ringpinky'],  funcPts:4,
+    objects:[{e:'🍶',l:'Bottle'},{e:'🔨',l:'Hammer'},{e:'🚇',l:'Handrail'}]},
+  {id:'point',   icon:'☝️',  name:'Index point',     fingers:['index'],                       funcPts:2,
+    objects:[{e:'🔘',l:'Button'},{e:'⌨️',l:'Keyboard'},{e:'🖥️',l:'Screen'}]},
+  {id:'open',    icon:'🖐️',  name:'Open palm',       fingers:['index','middle','ringpinky'],  funcPts:3,
+    objects:[{e:'🚪',l:'Door'},{e:'🏀',l:'Ball'},{e:'📦',l:'Box'}]},
+  {id:'fine',    icon:'🤏',  name:'Fine motor',      fingers:['index','middle'],              funcPts:4,
+    objects:[{e:'🪙',l:'Coin'},{e:'👕',l:'Button'},{e:'🔩',l:'Screw'}]},
+  {id:'sport',   icon:'🪝',  name:'Sport / hook',    fingers:['ringpinky'],                  funcPts:2,
+    objects:[{e:'🎒',l:'Bag'},{e:'🚴',l:'Bike'},{e:'🧗',l:'Climb'}]},
+];
+
+const AGE_TO_MM = {
+  1:75,2:80,3:85,4:90,5:95,6:100,7:105,8:110,
+  9:115,10:120,11:125,12:130,13:135,14:140,15:145,16:150,17:155,18:160
+};
+
+const CONJOINT_PAIRS_DEFAULT = [
+  {
+    id:'mass_vs_function',
+    question:'Mass vs function',
+    litNote:'Literature: lighter devices (< 400g) show better long-term adoption.',
+    a:{label:'Device A', mass:320, grips:3, battery:6,  price:4000, badge:'🪶 Lightweight', extra:''},
+    b:{label:'Device B', mass:420, grips:8, battery:8,  price:5500, badge:'💪 Full function', extra:''},
+  },
+  {
+    id:'battery_vs_mass',
+    question:'Battery life',
+    litNote:'Literature: school-age children need ≥ 6 h; full-day ≥ 10 h.',
+    a:{label:'Device A', mass:340, grips:3, battery:4,  price:4300, badge:'🪶 Lighter · 4 h battery', extra:''},
+    b:{label:'Device B', mass:390, grips:3, battery:12, price:4800, badge:'🔋 Full-day · 12 h battery', extra:''},
+  },
+  {
+    id:'wrist_needed',
+    question:'Wrist unit',
+    litNote:'Literature: passive wrist improves bimanual tasks; adds mass and cost.',
+    a:{label:'No wrist',     mass:350, grips:3, battery:8, price:4500, badge:'🚫 No wrist unit', extra:''},
+    b:{label:'Passive wrist',mass:365, grips:3, battery:8, price:4800, badge:'🔩 Passive wrist · 3 lockable positions', extra:''},
+  },
+  {
+    id:'cosmesis_vs_cost',
+    question:'Cosmetic glove',
+    litNote:'Literature: cosmesis important especially for older children and school inclusion.',
+    a:{label:'With glove',    mass:390, grips:3, battery:8, price:6500, badge:'🎨 Realistic glove · 6 colours', extra:''},
+    b:{label:'No glove',      mass:350, grips:3, battery:8, price:4500, badge:'🤖 Bare shell · robotic look',  extra:''},
+  },
+];
+
+let conjointPairs = JSON.parse(JSON.stringify(CONJOINT_PAIRS_DEFAULT));
+const CJ_SIDES  = ['a','b'];
+const CJ_FIELDS = ['mass','grips','battery','price'];
+
+// ── STATE ────────────────────────────────────────────────────────────────────
+function freshState() {
+  return {
+    role:'clinician', otherRole:'', country:'', experience:5, prosYrs:0,
+    ageMin:4, ageMax:14, engAgeMin:3, engAgeMax:10, age:8,
+    absence:'Wrist level', absence2:'Wrist level', device:'None',
+    activePct:20, numSizes:'3', salesDeviceMix:'', grips:[],
+    battery:'small', charge:'usbc', wristNecessary:'no', wristType:'',
+    reimb:4, priceFeeling:'acceptable', funding:[], otherFund:'', margin:'',
+    salesNotes:'', missing:'', adopt:'', risk:'', contactOk:'No', email:'',
+    conjointAnswers:{}
+  };
+}
+let state = freshState();
+let interviews = [];
+let currentStage = 1;
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function gv(id){ const e=document.getElementById(id); return e?e.value:''; }
+function sv(id,v){ const e=document.getElementById(id); if(e)e.value=v; }
+function ge(id){ return document.getElementById(id); }
+function euro(v){ return '€'+(Math.round(v)||0).toLocaleString(); }
+function grams(v){ return (Math.round(v)||0)+' g'; }
+// read numeric setting input safely
+function ns(id){ const e=ge(id); return e?Number(e.value)||0:0; }
+
+// ── SETTINGS PERSISTENCE ─────────────────────────────────────────────────────
+function saveSettings(){
+  const ids=['s_baseMass','s_basePrice','s_mIndex','s_pIndex','s_mMiddle','s_pMiddle',
+    's_mRingPinky','s_pRingPinky','s_mBattS','s_pBattS','s_mBattM','s_pBattM',
+    's_mBattL','s_pBattL','s_mWristP','s_pWristP','s_mWristA','s_pWristA',
+    's_mGlove','s_pGlove','s_margin'];
+  const d={};
+  ids.forEach(id=>{const e=ge(id);if(e)d[id]=e.value;});
+  try{localStorage.setItem('bh_s',JSON.stringify(d));}catch(e){}
+}
+function loadSettings(){
+  try{
+    const raw=localStorage.getItem('bh_s');
+    if(!raw)return;
+    const d=JSON.parse(raw);
+    Object.entries(d).forEach(([id,v])=>{const e=ge(id);if(e)e.value=v;});
+  }catch(e){}
+}
+
+// ── CONJOINT SETTINGS PERSISTENCE ────────────────────────────────────────────
+function saveConjointSettings(){
+  const data=CONJOINT_PAIRS_DEFAULT.map(p=>({
+    question:p.question, litNote:p.litNote,
+    a:{mass:p.a.mass,grips:p.a.grips,battery:p.a.battery,price:p.a.price},
+    b:{mass:p.b.mass,grips:p.b.grips,battery:p.b.battery,price:p.b.price},
+  }));
+  try{localStorage.setItem('bh_cj',JSON.stringify(data));}catch(e){}
+}
+function loadConjointSettings(){
+  try{
+    const raw=localStorage.getItem('bh_cj');
+    if(!raw)return;
+    const saved=JSON.parse(raw);
+    saved.forEach((pd,pi)=>{
+      if(!CONJOINT_PAIRS_DEFAULT[pi])return;
+      if(pd.question)CONJOINT_PAIRS_DEFAULT[pi].question=pd.question;
+      if(pd.litNote) CONJOINT_PAIRS_DEFAULT[pi].litNote=pd.litNote;
+      CJ_SIDES.forEach(side=>{
+        CJ_FIELDS.forEach(field=>{
+          if(pd[side]&&pd[side][field]!==undefined)
+            CONJOINT_PAIRS_DEFAULT[pi][side][field]=pd[side][field];
+        });
+      });
+    });
+    conjointPairs=JSON.parse(JSON.stringify(CONJOINT_PAIRS_DEFAULT));
+  }catch(e){}
+}
+
+// ── CASCADE: wrist from Settings, carry forward previous answers ──────────────
+function cascadePairs(){
+  const wPMass  = ns('s_mWristP') || 15;
+  const wPPrice = ns('s_pWristP') || 300;
+  const gMass   = ns('s_mGlove')  || 40;
+  const gPrice  = ns('s_pGlove')  || 2000;
+  const bSMass  = ns('s_mBattS')  || 20;
+  const bSPrice = ns('s_pBattS')  || 250;
+  const bLMass  = ns('s_mBattL')  || 50;
+  const bLPrice = ns('s_pBattL')  || 550;
+
+  conjointPairs = JSON.parse(JSON.stringify(CONJOINT_PAIRS_DEFAULT));
+
+  // ── Pair 2: carry mass, price, grips, battery from Pair 1 winner ────────────
+  const a1 = state.conjointAnswers['mass_vs_function'];
+  if(a1){
+    const w1 = conjointPairs[0][a1];
+    const m2a = w1.mass+bSMass,  pr2a = w1.price+bSPrice;
+    const m2b = w1.mass+bLMass,  pr2b = w1.price+bLPrice;
+    conjointPairs[1].a.grips=w1.grips; conjointPairs[1].b.grips=w1.grips;
+    conjointPairs[1].a.mass=m2a;       conjointPairs[1].b.mass=m2b;
+    conjointPairs[1].a.price=pr2a;     conjointPairs[1].b.price=pr2b;
+    conjointPairs[1].a.battery=4;      conjointPairs[1].b.battery=12;
+    conjointPairs[1].a.badge='🪶 Light battery · 4 h';
+    conjointPairs[1].b.badge='🔋 Full-day battery · 12 h';
+    conjointPairs[1].question='Battery life';
+  }
+
+  // ── Pair 3: carry mass, price, grips, battery from Pair 2 winner ────────────
+  const a2 = state.conjointAnswers['battery_vs_mass'];
+  if(a1 && a2){
+    const w2 = conjointPairs[1][a2];
+    conjointPairs[2].a.grips=w2.grips;    conjointPairs[2].b.grips=w2.grips;
+    conjointPairs[2].a.battery=w2.battery; conjointPairs[2].b.battery=w2.battery;
+    conjointPairs[2].a.mass=w2.mass;       conjointPairs[2].b.mass=w2.mass+wPMass;
+    conjointPairs[2].a.price=w2.price;     conjointPairs[2].b.price=w2.price+wPPrice;
+    conjointPairs[2].a.badge='🚫 No wrist';
+    conjointPairs[2].b.badge='🔩 Passive wrist · 3 lockable positions';
+    conjointPairs[2].question='Wrist unit';
+  } else {
+    const base=conjointPairs[2].a; const bP=base.price;
+    conjointPairs[2].b.mass=base.mass+wPMass; conjointPairs[2].b.price=bP+wPPrice;
+    conjointPairs[2].a.badge='🚫 No wrist';
+    conjointPairs[2].b.badge='🔩 Passive wrist · 3 lockable positions';
+    conjointPairs[2].question='Wrist unit';
+  }
+
+  // ── Pair 4: carry mass, price, grips, battery from Pair 3 winner ────────────
+  const a3 = state.conjointAnswers['wrist_needed'];
+  if(a1 && a2 && a3){
+    const w3 = conjointPairs[2][a3];
+    conjointPairs[3].a.grips=w3.grips;     conjointPairs[3].b.grips=w3.grips;
+    conjointPairs[3].a.battery=w3.battery;  conjointPairs[3].b.battery=w3.battery;
+    conjointPairs[3].a.mass=w3.mass+gMass;  conjointPairs[3].b.mass=w3.mass;
+    conjointPairs[3].a.price=w3.price+gPrice; conjointPairs[3].b.price=w3.price;
+    conjointPairs[3].a.badge='🎨 Realistic glove · 6 colours';
+    conjointPairs[3].b.badge='🤖 Bare shell · no glove';
+    conjointPairs[3].question='Cosmetic glove';
+  }
+}
+
+// ── BUILD CONJOINT PAIRS UI ───────────────────────────────────────────────────
+function buildConjointPairs(){
+  cascadePairs();
+  const container = ge('conjointPairs');
+  if(!container) return;
+  container.innerHTML = '';
+
+  conjointPairs.forEach(function(pair, pi){
+    const chosen = state.conjointAnswers[pair.id];
+
+    const wrap = document.createElement('div');
+    wrap.style.cssText = 'margin-bottom:.5rem;padding:1rem;background:var(--bg);border-radius:var(--r-lg);border:1px solid var(--border)';
+
+    const hdr = document.createElement('div');
+    hdr.innerHTML =
+      '<div style="font-weight:700;margin-bottom:.5rem;font-size:.95rem">'+pair.question+'</div>';
+    wrap.appendChild(hdr);
+
+    const grid = document.createElement('div');
+    grid.style.cssText = 'display:grid;grid-template-columns:1fr 1fr;gap:.6rem';
+    wrap.appendChild(grid);
+    container.appendChild(wrap);
+
+    // A/B buttons — real DOM nodes, no innerHTML nesting
+    CJ_SIDES.forEach(function(side){
+      const d = pair[side];
+      const isCh = (chosen === side);
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.style.cssText =
+        'border:2px solid '+(isCh?'var(--primary)':'var(--border)')+
+        ';border-radius:var(--r-lg);padding:.8rem;background:'+(isCh?'#e0f2f1':'var(--surface2)')+
+        ';cursor:pointer;text-align:left;width:100%;display:block;transition:.15s';
+      btn.innerHTML =
+        '<div style="font-size:.67rem;text-transform:uppercase;color:var(--muted);margin-bottom:.18rem">'+d.label+'</div>'+
+        '<div style="font-weight:800;font-size:.83rem;margin-bottom:.38rem;line-height:1.3">'+d.badge+'</div>'+
+        '<div style="font-size:.76rem;display:grid;gap:.14rem">'+
+          '<div>⚖️ <strong>'+d.mass+' g</strong></div>'+
+          '<div>✋ <strong>'+d.grips+' grip'+(d.grips!==1?'s':'')+'</strong></div>'+
+          '<div>🔋 <strong>'+d.battery+' h</strong></div>'+
+          '<div>💶 <strong>€'+d.price.toLocaleString()+'</strong></div>'+
+          (d.extra?'<div style="font-size:.69rem;color:var(--muted);font-style:italic">'+d.extra+'</div>':'')+
+        '</div>'+
+        (isCh?'<div style="margin-top:.38rem;font-size:.71rem;font-weight:700;color:var(--primary)">✅ Selected</div>':'');
+
+      // Capture side in closure
+      (function(s){
+        btn.addEventListener('click', function(){
+          state.conjointAnswers[pair.id] = s;
+          buildConjointPairs();
+          const ans = Object.keys(state.conjointAnswers).length;
+          const note = ge('conjointNote');
+          if(note) note.textContent = ans+' of '+conjointPairs.length+' answered'+(ans===conjointPairs.length?' ✅':'');
+        });
+      })(side);
+
+      grid.appendChild(btn);
+    });
+
+    // Edit row below — separate element, cannot block button clicks
+    const er = document.createElement('div');
+    er.style.cssText = 'margin-top:.4rem;padding:.35rem .7rem;background:#f9f7f3;border:1px dashed var(--border);border-radius:4px;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap';
+    er.innerHTML = '<span style="font-size:.67rem;color:var(--muted)">✏️</span>';
+
+    function makeEditInp(val, ph, field, idx){
+      const inp = document.createElement('input');
+      inp.type='text'; inp.value=val; inp.placeholder=ph;
+      inp.style.cssText='flex:2;min-width:120px;padding:.22rem .45rem;font-size:.69rem;border:1px solid var(--border);border-radius:3px;background:#fff';
+      inp.addEventListener('input', function(){
+        CONJOINT_PAIRS_DEFAULT[idx][field] = this.value;
+        saveConjointSettings();
+      });
+      return inp;
+    }
+    er.appendChild(makeEditInp(pair.question, 'Question', 'question', pi));
+    er.appendChild(makeEditInp(pair.litNote,  'Lit note',  'litNote',  pi));
+    container.appendChild(er);
+  });
+
+  const ans2 = Object.keys(state.conjointAnswers).length;
+  const note2 = ge('conjointNote');
+  if(note2) note2.textContent = ans2>0 ? ans2+' of '+conjointPairs.length+' answered'+(ans2===conjointPairs.length?' ✅':'') : '';
+}
+
+// ── CALC BUILD ───────────────────────────────────────────────────────────────
+function calcBuild(){
+  let mass=ns('s_baseMass'), price=ns('s_basePrice'), funcPts=0;
+  const allFingers=new Set();
+  state.grips.forEach(gid=>{
+    const g=GRIPS.find(x=>x.id===gid);
+    if(g){g.fingers.forEach(f=>allFingers.add(f)); funcPts+=g.funcPts;}
+  });
+  if(allFingers.has('index'))     {mass+=ns('s_mIndex');     price+=ns('s_pIndex');}
+  if(allFingers.has('middle'))    {mass+=ns('s_mMiddle');    price+=ns('s_pMiddle');}
+  if(allFingers.has('ringpinky')) {mass+=ns('s_mRingPinky'); price+=ns('s_pRingPinky');}
+  if(state.battery==='small')  {mass+=ns('s_mBattS'); price+=ns('s_pBattS');}
+  if(state.battery==='medium') {mass+=ns('s_mBattM'); price+=ns('s_pBattM');}
+  if(state.battery==='large')  {mass+=ns('s_mBattL'); price+=ns('s_pBattL');}
+  if(state.wristNecessary==='yes'){
+    if(state.wristType==='passive'){mass+=ns('s_mWristP'); price+=ns('s_pWristP');}
+    if(state.wristType==='active') {mass+=ns('s_mWristA'); price+=ns('s_pWristA');}
+  }
+  const marginPct = ns('s_margin')/100;
+  const clinicianPrice = Math.round(price*(1+marginPct));
+  const runtime = state.battery==='small'?4:state.battery==='medium'?8:12;
+  let tier = funcPts<=3?'Basic':funcPts<=6?'Standard':'Premium';
+  return {mass, price, clinicianPrice, runtime, tier, funcPts};
+}
+
+// ── UPDATE SUMMARY ───────────────────────────────────────────────────────────
+function update(){
+  const b=calcBuild();
+  const set=(id,v)=>{const e=ge(id);if(e)e.textContent=v;};
+  set('sumMass',   grams(b.mass));
+  set('sumPrice',  euro(b.price));
+  set('sumClinPrice', euro(b.clinicianPrice));
+  set('sumTier',   b.tier);
+  set('sumFuncPts',b.funcPts+' pts');
+  set('sumGrips',  state.grips.length+' grip patterns');
+  set('sumBattery',b.runtime+' h');
+  set('sumWrist',  state.wristNecessary==='yes'?(state.wristType||'–'):'none');
+}
+
+// ── BLOCK 6 PRICE/MASS DISPLAY ────────────────────────────────────────────────
+function updateBlock6(){
+  cascadePairs();
+  const pairOrder = ['cosmesis_vs_cost','wrist_needed','battery_vs_mass','mass_vs_function'];
+  let conjMass=null, conjPrice=null;
+  for(let i=0;i<pairOrder.length;i++){
+    const pid=pairOrder[i];
+    const ans=(state.conjointAnswers||{})[pid];
+    if(ans){
+      const pairIdx=['mass_vs_function','battery_vs_mass','wrist_needed','cosmesis_vs_cost'].indexOf(pid);
+      const winner=conjointPairs[pairIdx][ans];
+      conjMass=winner.mass; conjPrice=winner.price;
+      break;
+    }
+  }
+  const b=calcBuild();
+  const finalMass  = conjMass  !== null ? conjMass  : Math.round(b.mass);
+  const finalPrice = conjPrice !== null ? conjPrice : Math.round(b.price);
+  const marginPct  = ns('s_margin')/100;
+  const clinPrice  = Math.round(finalPrice*(1+marginPct));
+
+  const priceSrc = conjMass !== null ? 'From your trade-off choices' : 'Estimated from configuration';
+
+  const ePrice = ge('priceDisplay');
+  const ePriceLbl = ge('priceBoxLabel');
+  const ePriceSub = ge('priceDisplaySub');
+  const eMass  = ge('massDisplay');
+
+  if(ePrice)    ePrice.textContent    = euro(clinPrice);
+  if(ePriceLbl) ePriceLbl.textContent = 'Device price (incl. margin)';
+  if(ePriceSub) ePriceSub.textContent = priceSrc;
+  if(eMass)     eMass.textContent     = grams(finalMass);
+}
+
+// ── REIMBURSEMENT HINTS ───────────────────────────────────────────────────────
+function buildReimbHints(){
+  const hints=[
+    {v:1,label:'< €1,000'},  {v:2,label:'€1,000–2,500'},
+    {v:3,label:'€2,500–4,000'},{v:4,label:'€4,000–6,000'},
+    {v:5,label:'€6,000–8,000'},{v:6,label:'€8,000–12,000'},
+    {v:7,label:'€12,000–18,000'},{v:8,label:'> €18,000'},
+  ];
+  const c=ge('reimbHints');
+  if(!c)return;
+  c.innerHTML=hints.map(h=>`<span style="font-size:.7rem;color:var(--muted)">${h.label}</span>`).join('');
+}
+function updateReimb(){
+  const v=Number(gv('f_reimb'));
+  state.reimb=v;
+  const labels=['<€1k','€1–2.5k','€2.5–4k','€4–6k','€6–8k','€8–12k','€12–18k','>€18k'];
+  const el=ge('reimbLabel');
+  if(el)el.textContent=labels[v-1]||'';
+}
+
+// ── ROLE ADAPTATION ───────────────────────────────────────────────────────────
+function adaptRole(){
+  const r=state.role;
+  const clinBlocks=['clinBlock1','clinBlock2','clinBlock3','clinBlock4'];
+  const engBlocks=['engBlock1','engBlock2'];
+  const salesBlocks=['salesBlock1','salesBlock2'];
+  clinBlocks.forEach(id=>{const e=ge(id);if(e)e.style.display=(r==='clinician'||r==='other')?'block':'none';});
+  engBlocks.forEach(id=>{const e=ge(id);if(e)e.style.display=(r==='engineer')?'block':'none';});
+  salesBlocks.forEach(id=>{const e=ge(id);if(e)e.style.display=(r==='sales')?'block':'none';});
+  const ow=ge('otherRoleWrap');if(ow)ow.style.display=(r==='other')?'block':'none';
+  const wt=ge('wristTypeBlock');if(wt)wt.style.display=(state.wristNecessary==='yes')?'block':'none';
+}
+
+// ── GRIP GRID ─────────────────────────────────────────────────────────────────
+function buildGripGrid(){
+  const c=ge('gripGrid');
+  if(!c)return;
+  c.innerHTML='';
+  GRIPS.forEach(g=>{
+    const btn=document.createElement('button');
+    btn.type='button';
+    const rank=state.grips.indexOf(g.id); // -1 if not selected
+    const isSel=rank>=0;
+    const rankLabel=isSel?['1st','2nd','3rd'][rank]||'':'';
+    btn.style.cssText='padding:.6rem .65rem;border:2px solid '+(isSel?'var(--primary)':'var(--border)')+
+      ';border-radius:var(--r-lg);background:'+(isSel?'#e0f2f1':'var(--surface2)')+
+      ';cursor:pointer;font-size:.78rem;transition:.15s;text-align:center;min-width:120px;vertical-align:top';
+    const usesHtml='<div style="display:flex;justify-content:center;gap:.35rem;margin-top:.3rem">'+(
+      (g.objects||[]).map(function(o){
+        return '<div style="display:flex;flex-direction:column;align-items:center;gap:.1rem">'+
+          '<div style="font-size:1.45rem;line-height:1">'+o.e+'</div>'+
+          '<div style="font-size:.58rem;color:var(--muted);white-space:nowrap">'+o.l+'</div>'+
+          '</div>';
+      }).join('')
+    )+'</div>';
+    const rankBadge = isSel
+      ? '<div style="position:absolute;top:.3rem;right:.3rem;font-size:.65rem;font-weight:800;'+
+        'background:var(--primary);color:#fff;border-radius:10px;padding:.1rem .35rem;line-height:1.4">'+rankLabel+'</div>'
+      : '';
+    btn.style.position='relative';
+    btn.innerHTML=
+      rankBadge+
+      '<div style="font-size:1.6rem;line-height:1;margin-bottom:.25rem">'+(g.icon||'✋')+'</div>'+
+      '<div style="font-size:.79rem;font-weight:700;margin-bottom:.3rem">'+g.name+'</div>'+
+      usesHtml;
+    btn.addEventListener('click',function(){
+      const idx=state.grips.indexOf(g.id);
+      if(idx>=0){
+        state.grips.splice(idx,1);  // deselect
+      } else {
+        if(state.grips.length>=3) return; // max 3
+        state.grips.push(g.id);
+      }
+      buildGripGrid(); update();
+    });
+    c.appendChild(btn);
+  });
+}
+
+// ── HAND SIZE VIZ ─────────────────────────────────────────────────────────────
+function updateHandSizeViz(){
+  const mn=state.engAgeMin||3, mx=state.engAgeMax||10;
+  const n=Number(state.numSizes)||3;
+  const mmMin=AGE_TO_MM[mn]||85, mmMax=AGE_TO_MM[mx]||120;
+  const pill=ge('handSizePill');
+  if(pill)pill.textContent='Hand sizes: ~'+mmMin+'–'+mmMax+' mm';
+  const wrap=ge('handSizeViz');
+  if(!wrap)return;
+  wrap.innerHTML='';
+  const step=(mmMax-mmMin)/(n-1||1);
+  for(let i=0;i<n;i++){
+    const mm=Math.round(mmMin+step*i);
+    const sz=40+i*18;
+    const div=document.createElement('div');
+    div.style.cssText='display:flex;flex-direction:column;align-items:center;gap:.3rem';
+    div.innerHTML='<div style="font-size:'+sz+'px;line-height:1">🖐️</div>'+
+      '<div style="font-size:.7rem;font-weight:700">Size '+(i+1)+'</div>'+
+      '<div style="font-size:.68rem;color:var(--muted)">~'+mm+' mm</div>';
+    wrap.appendChild(div);
+  }
+}
+
+// ── STAGE NAVIGATION ──────────────────────────────────────────────────────────
+function showStage(n){
+  currentStage = Math.max(1, Math.min(TOTAL_STAGES, n));
+  document.querySelectorAll('.stage-card').forEach((el,i)=>{
+    el.style.display = (i+1===currentStage)?'block':'none';
+  });
+  const prev=ge('btnPrev'), next=ge('btnNext');
+  if(prev) prev.disabled = (currentStage===1);
+  if(next) next.textContent = (currentStage===TOTAL_STAGES)?'✅ Save & Done':'Next →';
+  buildDots();
+  if(currentStage===3) buildConjointPairs();
+  if(currentStage===4) updateBlock6();
+  update();
+}
+
+function buildDots(){
+  const c=ge('stageDots');
+  if(!c)return;
+  let h='';
+  for(let i=1;i<=TOTAL_STAGES;i++){
+    const active=(i===currentStage);
+    h+='<span style="display:inline-block;width:'+(active?'20px':'10px')+';height:10px;border-radius:5px;'+
+      'background:'+(active?'var(--primary)':'var(--border)')+';margin:0 2px;transition:.2s"></span>';
+  }
+  c.innerHTML=h;
+}
+
+// ── SINGLE / MULTI CHOICE BUTTONS ─────────────────────────────────────────────
+function singleChoice(cid, key, cb){
+  const el=ge(cid); if(!el)return;
+  el.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      el.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state[key]=btn.dataset.val;
+      if(cb)cb(btn.dataset.val);
+      update();
+    });
+  });
+}
+function multiChoice(cid, key, cb){
+  const el=ge(cid); if(!el)return;
+  el.querySelectorAll('.choice-btn').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      btn.classList.toggle('active');
+      state[key]=Array.from(el.querySelectorAll('.choice-btn.active')).map(b=>b.dataset.val);
+      if(cb)cb(state[key]);
+      update();
+    });
+  });
+}
+
+// ── SAVE / EXPORT ─────────────────────────────────────────────────────────────
+function saveInterview(){
+  const b=calcBuild();
+  const ca=state.conjointAnswers||{};
+  const now=new Date();
+  const dateStr=now.toISOString().slice(0,10);
+  const timeStr=now.toTimeString().slice(0,5);
+
+  // Use conjoint winner mass/price as the "final device" if pairs were answered
+  // Walk backwards to find the last answered pair's winning device
+  cascadePairs(); // ensure conjointPairs is up to date
+  const pairOrder=['cosmesis_vs_cost','wrist_needed','battery_vs_mass','mass_vs_function'];
+  let conjMass=null, conjPrice=null, conjGrips=null, conjBattery=null;
+  for(let i=0;i<pairOrder.length;i++){
+    const pid=pairOrder[i];
+    const ans=ca[pid];
+    if(ans){
+      const pairIdx=['mass_vs_function','battery_vs_mass','wrist_needed','cosmesis_vs_cost'].indexOf(pid);
+      const winner=conjointPairs[pairIdx][ans];
+      conjMass=winner.mass; conjPrice=winner.price;
+      conjGrips=winner.grips; conjBattery=winner.battery;
+      break;
+    }
+  }
+  const finalMass   = conjMass   !== null ? conjMass   : Math.round(b.mass);
+  const finalPrice  = conjPrice  !== null ? conjPrice  : Math.round(b.price);
+  const marginPct   = ns('s_margin')/100;
+  const finalClinPrice = Math.round(finalPrice*(1+marginPct));
+
+  interviews.push({
+    ...JSON.parse(JSON.stringify(state)),
+    date:dateStr, time:timeStr,
+    mass:finalMass, price:finalPrice,
+    clinicianPrice:finalClinPrice,
+    conjointGrips:conjGrips, conjointBattery:conjBattery,
+    runtime:conjBattery||b.runtime, tier:b.tier, funcPts:b.funcPts,
+    conjointAnswers:JSON.parse(JSON.stringify(ca))
+  });
+  refreshResults();
+  switchPanel('resultsPanel');
+}
+
+function exportCsv(){
+  if(!interviews.length){alert('No interviews saved yet.');return;}
+  const cols=['date','time','role','country','experience','prosYrs',
+    'age','absence','device','activePct','numSizes',
+    'battery','charge','wristNecessary','wristType',
+    'reimb','priceFeeling','contactOk','email',
+    'mass','price','clinicianPrice','runtime','tier','funcPts',
+    'grips',
+    'cj_mass_vs_function','cj_battery_vs_mass','cj_wrist_needed','cj_cosmesis_vs_cost',
+    'missing','adopt','risk','salesNotes','margin'];
+  const rows=interviews.map(it=>{
+    const ca=it.conjointAnswers||{};
+    return cols.map(c=>{
+      if(c==='grips') return '"'+(it.grips||[]).map(id=>{const g=GRIPS.find(g=>g.id===id);return g?g.name:id;}).join('; ')+'"';
+      if(c.startsWith('cj_')) return ca[c.replace('cj_','')]||'';
+      const v=it[c]!=null?it[c]:'';
+      return typeof v==='string'&&v.includes(',')?'"'+v+'"':v;
+    }).join(',');
+  });
+  const csv=[cols.join(',')].concat(rows).join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  // filename includes today's date
+  const today=new Date().toISOString().slice(0,10);
+  a.download='interviews_'+today+'.csv';
+  a.click();
+}
+
+// ── RESULTS TABLE ─────────────────────────────────────────────────────────────
+function refreshResults(){
+  const body=ge('resultsBody');
+  if(!body)return;
+  if(!interviews.length){
+    body.innerHTML='<tr><td colspan="15" style="color:var(--muted)">No interviews saved yet.</td></tr>';
+  } else {
+    let rows='';
+    for(let i=0;i<interviews.length;i++){
+      const it=interviews[i];
+      const ca=it.conjointAnswers||{};
+      const gripNames=(it.grips||[]).map(id=>{const g=GRIPS.find(g=>g.id===id);return g?g.name:id;}).join(', ');
+      rows+='<tr>'+
+        '<td>'+(i+1)+'</td>'+
+        '<td>'+(it.date||'')+'</td>'+
+        '<td>'+it.role+'</td>'+
+        '<td>'+(it.country||'')+'</td>'+
+        '<td>'+(it.mass||0)+'g</td>'+
+        '<td>'+euro(it.price||0)+'</td>'+
+        '<td>'+(it.tier||'')+'</td>'+
+        '<td>'+(ca.mass_vs_function||'–').toUpperCase()+'</td>'+
+        '<td>'+(ca.battery_vs_mass||'–').toUpperCase()+'</td>'+
+        '<td>'+(ca.wrist_needed||'–').toUpperCase()+'</td>'+
+        '<td>'+(ca.cosmesis_vs_cost||'–').toUpperCase()+'</td>'+
+        '<td><button onclick="delInterview('+i+')" style="background:none;border:none;cursor:pointer;color:#e53935">🗑</button></td>'+
+        '</tr>';
+    }
+    body.innerHTML=rows;
+  }
+  const rc=ge('rCount'); if(rc)rc.textContent=interviews.length;
+}
+function delInterview(i){ interviews.splice(i,1); refreshResults(); }
+
+// ── RESET (NEW INTERVIEW) ─────────────────────────────────────────────────────
+function resetInterview(){
+  state = freshState();
+  // clear text inputs
+  ['f_country','f_otherRole','f_otherFund','f_sales','f_missing','f_adopt','f_risk','f_email']
+    .forEach(id=>{const e=ge(id);if(e)e.value='';});
+  sv('f_exp',5); sv('f_reimb',4);
+  // reset all choice buttons then re-apply defaults
+  document.querySelectorAll('.choice-btn').forEach(b=>b.classList.remove('active'));
+  [{id:'roleChoices',val:'clinician'},{id:'battChoices',val:'small'},
+   {id:'chargeChoices',val:'usbc'},{id:'wristNecessaryChoices',val:'no'},
+   {id:'feelChoices',val:'acceptable'},{id:'numSizesChoices',val:'3'}
+  ].forEach(function(o){
+    const el=document.querySelector('#'+o.id+' [data-val="'+o.val+'"]');
+    if(el)el.classList.add('active');
+  });
+  if(dr2){dr2.setMin(3);dr2.setMax(10);}
+  updateHandSizeViz(); updateReimb(); adaptRole(); buildGripGrid();
+  showStage(1); switchPanel('gamePanel'); update();
+}
+
+// ── PANEL SWITCH ──────────────────────────────────────────────────────────────
+function switchPanel(id){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const el=ge(id); if(el)el.classList.add('active');
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  const tab=document.querySelector('[data-panel="'+id+'"]');
+  if(tab)tab.classList.add('active');
+}
+
+// ── DUAL RANGE SLIDER ─────────────────────────────────────────────────────────
+function makeDualRange(wrapId,fillId,thumbMinId,thumbMaxId,minVal,maxVal,minInit,maxInit,onChange){
+  const wrap=ge(wrapId),fill=ge(fillId),tMin=ge(thumbMinId),tMax=ge(thumbMaxId);
+  if(!wrap||!fill||!tMin||!tMax)return {setMin:function(){},setMax:function(){}};
+  let curMin=minInit, curMax=maxInit;
+  function pct(v){return (v-minVal)/(maxVal-minVal)*100;}
+  function render(){
+    const lo=pct(curMin), hi=pct(curMax);
+    fill.style.left=lo+'%'; fill.style.width=(hi-lo)+'%';
+    tMin.style.left=lo+'%'; tMax.style.left=hi+'%';
+  }
+  function dragThumb(thumb, isMin){
+    thumb.addEventListener('pointerdown',function(e){
+      e.preventDefault();
+      const rect=wrap.getBoundingClientRect();
+      function onMove(ev){
+        let x=Math.max(0,Math.min(1,(ev.clientX-rect.left)/rect.width));
+        let v=Math.round(minVal+x*(maxVal-minVal));
+        if(isMin){curMin=Math.min(v,curMax-1);}
+        else{curMax=Math.max(v,curMin+1);}
+        render(); onChange(curMin,curMax);
+      }
+      function onUp(){document.removeEventListener('pointermove',onMove);document.removeEventListener('pointerup',onUp);}
+      document.addEventListener('pointermove',onMove);
+      document.addEventListener('pointerup',onUp);
+    });
+  }
+  dragThumb(tMin,true); dragThumb(tMax,false); render();
+  return {
+    setMin:function(v){curMin=v;render();},
+    setMax:function(v){curMax=v;render();}
+  };
+}
+
+// ── WIRE SETTINGS LIVE SAVE ───────────────────────────────────────────────────
+function wireSettings(){
+  document.querySelectorAll('.setting-input input').forEach(inp=>{
+    inp.addEventListener('input',function(){
+      saveSettings();
+      update();
+      // if wrist setting changed, refresh conjoint pair 3 if visible
+      if(this.id==='s_mWristP'||this.id==='s_pWristP'){
+        if(currentStage===3) buildConjointPairs();
+      }
+    });
+  });
+}
+
+// ── CONJOINT SETTINGS PANEL WIRING ──────────────────────────────────────────
+function populateConjointSettingsUI(){
+  document.querySelectorAll('.cj-input').forEach(function(inp){
+    const pi=Number(inp.dataset.pair), side=inp.dataset.side, field=inp.dataset.field;
+    if(CONJOINT_PAIRS_DEFAULT[pi]&&CONJOINT_PAIRS_DEFAULT[pi][side])
+      inp.value=CONJOINT_PAIRS_DEFAULT[pi][side][field]||0;
+  });
+}
+function wireConjointSettingsInputs(){
+  document.querySelectorAll('.cj-input').forEach(function(inp){
+    inp.addEventListener('input',function(){
+      const pi=Number(this.dataset.pair), side=this.dataset.side, field=this.dataset.field;
+      const val=Number(this.value)||0;
+      if(CONJOINT_PAIRS_DEFAULT[pi]&&CONJOINT_PAIRS_DEFAULT[pi][side])
+        CONJOINT_PAIRS_DEFAULT[pi][side][field]=val;
+      saveConjointSettings();
+      if(currentStage===3)buildConjointPairs();
+    });
+  });
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+loadSettings();
+loadConjointSettings();
+populateConjointSettingsUI();
+wireConjointSettingsInputs();
+
+let dr1, dr2;
+(function(){
+  dr1 = makeDualRange('drWrap1','drFill1','drThumbMin1','drThumbMax1',1,18,4,14,function(mn,mx){
+    state.ageMin=mn; state.ageMax=mx;
+    const e1=ge('drMinLabel1'),e2=ge('drMaxLabel1');
+    if(e1)e1.textContent=mn+' yrs'; if(e2)e2.textContent=mx+' yrs';
+    const mm1=AGE_TO_MM[mn]||95, mm2=AGE_TO_MM[mx]||145;
+    const hp=ge('handSizePill'); if(hp)hp.textContent='Hand sizes: ~'+mm1+'–'+mm2+'mm';
+  });
+  dr2 = makeDualRange('drWrap2','drFill2','drThumbMin2','drThumbMax2',1,18,3,10,function(mn,mx){
+    state.engAgeMin=mn; state.engAgeMax=mx;
+    const e1=ge('drMinLabel2'),e2=ge('drMaxLabel2');
+    if(e1)e1.textContent=mn+' yrs'; if(e2)e2.textContent=mx+' yrs';
+    updateHandSizeViz();
+  });
+})();
+
+// Wire single/multi choices
+singleChoice('roleChoices','role',function(v){
+  state.role=v; adaptRole(); update();
+});
+singleChoice('battChoices','battery',null);
+singleChoice('chargeChoices','charge',null);
+singleChoice('wristNecessaryChoices','wristNecessary',function(v){
+  const wt=ge('wristTypeBlock');
+  if(wt)wt.style.display=(v==='yes')?'block':'none';
+  update();
+});
+singleChoice('wristTypeChoices','wristType',null);
+singleChoice('feelChoices','priceFeeling',null);
+singleChoice('numSizesChoices','numSizes',function(v){
+  state.numSizes=v; updateHandSizeViz();
+});
+singleChoice('numHandsChoices','numSizes',function(v){
+  state.numSizes=v; updateHandSizeViz();
+});
+multiChoice('fundChoices','funding',null);
+multiChoice('marginChoices','margin',null);
+multiChoice('salesDeviceChoices','salesDeviceMix',null);
+multiChoice('absenceChoices','absence',null);
+multiChoice('absence2Choices','absence2',null);
+multiChoice('deviceChoices','device',null);
+multiChoice('contactChoices','contactOk',null);
+
+// Wire text inputs
+['f_country','f_otherRole','f_otherFund','f_sales','f_missing','f_adopt','f_risk','f_email'].forEach(id=>{
+  const el=ge(id);
+  if(el)el.addEventListener('input',function(){
+    const map={'f_country':'country','f_otherRole':'otherRole','f_otherFund':'otherFund',
+      'f_sales':'salesNotes','f_missing':'missing','f_adopt':'adopt','f_risk':'risk','f_email':'email'};
+    state[map[id]]=this.value;
+  });
+});
+const fexp=ge('f_exp'); if(fexp)fexp.addEventListener('input',function(){state.experience=Number(this.value);});
+const freim=ge('f_reimb'); if(freim)freim.addEventListener('input',function(){state.reimb=Number(this.value);updateReimb();});
+
+// Wire nav buttons
+ge('btnNext').addEventListener('click',function(){
+  if(currentStage===TOTAL_STAGES) saveInterview();
+  else showStage(currentStage+1);
+});
+ge('btnPrev').addEventListener('click',function(){ showStage(currentStage-1); });
+ge('btnSave').addEventListener('click', saveInterview);
+ge('btnNewInterview').addEventListener('click', resetInterview);
+ge('btnExport').addEventListener('click', exportCsv);
+
+// Wire tab buttons
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click',function(){ switchPanel(this.dataset.panel); });
+});
+
+// Wire settings
+wireSettings();
+
+// Initial render
+buildReimbHints(); updateReimb(); adaptRole(); buildGripGrid();
+updateHandSizeViz(); showStage(1); update(); refreshResults();
+
+</script>
+</body>
+</html>
